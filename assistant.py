@@ -14,11 +14,13 @@ from youtubesearchpython import VideosSearch
 # Global to-do list
 todo_list = []
 
+# Speak function to output audio responses
 def speak(text):
     tts = gTTS(text=text, lang='en')
     tts.save("temp.mp3")
     os.system("mpg321 temp.mp3")
 
+# Listen function to capture user's voice input
 def listen():
     recognizer = sr.Recognizer()
     with sr.Microphone() as source:
@@ -32,39 +34,47 @@ def listen():
     except sr.UnknownValueError:
         speak("Sorry, I did not understand that.")
         return ""
+    except sr.RequestError:
+        speak("Sorry, the speech service is unavailable.")
+        return ""
 
+# Wikipedia search function
 def search_wikipedia(query):
     try:
         result = wikipedia.summary(query, sentences=1)
         return result
     except wikipedia.exceptions.DisambiguationError:
         return "I found multiple results. Please be more specific."
+    except wikipedia.exceptions.HTTPTimeoutError:
+        return "The Wikipedia service is currently unavailable. Please try again later."
 
+# Function to tell the current time
 def tell_time():
     now = datetime.datetime.now()
     return "The current time is " + now.strftime("%I:%M %p")
 
+# Function to tell the current date
 def tell_date():
     today = datetime.date.today()
     return "Today's date is " + today.strftime("%B %d, %Y")
 
+# Open website function
 def open_website(website):
     if not website.startswith('http://') and not website.startswith('https://'):
-        if '.' in website:
-            website = 'https://' + website
-        else:
-            website = 'https://www.' + website + '.com'
+        website = f"https://{website}" if '.' in website else f"https://www.{website}.com"
     try:
         webbrowser.open(website)
         speak(f"Opening {website}")
     except Exception as e:
         speak(f"Sorry, I couldn't open the website. Error: {str(e)}")
 
+# Google search function
 def google_search(query):
-    url = "https://www.google.com/search?q=" + query.replace(" ", "+")
+    url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
     webbrowser.open(url)
     return f"Searching Google for: {query}"
 
+# Play YouTube video function
 def play_youtube(query):
     try:
         kit.playonyt(query)
@@ -72,45 +82,53 @@ def play_youtube(query):
     except Exception as e:
         return f"Sorry, could not play the video. Error: {str(e)}"
 
+# Basic calculator function
 def basic_calculator(command):
     try:
         expression = command.replace("calculate", "").strip()
         result = eval(expression)
         return f"The result is {result}."
-    except:
+    except Exception:
         return "Sorry, I couldn't calculate that."
 
+# Tell a joke function
 def tell_joke():
     return pyjokes.get_joke()
 
+# Check battery status
 def check_battery():
     battery = psutil.sensors_battery()
-    return f"Your battery is at {battery.percent} percent."
+    return f"Your battery is at {battery.percent}%."
 
+# Add a note
 def add_to_notes(note):
     with open("notes.txt", "a") as file:
         file.write(note + "\n")
     return "Note saved."
 
+# Set a reminder
 def set_reminder(reminder_text):
     with open("reminders.txt", "a") as f:
         f.write(reminder_text + "\n")
     return f"Reminder saved: {reminder_text}"
 
+# Start a timer function
 def start_timer(seconds):
     try:
         seconds = int(seconds)
         time.sleep(seconds)
         return f"Timer for {seconds} seconds completed!"
-    except:
+    except ValueError:
         return "Please provide time in seconds."
 
+# Add task to the to-do list
 def add_task(task):
     if not task:
         return "Please specify the task."
     todo_list.append(task)
     return f"Task added: {task}"
 
+# Show all tasks in the to-do list
 def show_tasks():
     if not todo_list:
         return "You have no tasks."
@@ -120,6 +138,7 @@ def show_tasks():
             tasks += f"{idx}. {task}\n"
         return tasks
 
+# Remove a task from the to-do list
 def remove_task(task_number):
     try:
         index = int(task_number) - 1
@@ -131,10 +150,12 @@ def remove_task(task_number):
     except ValueError:
         return "Please provide a valid task number."
 
+# Clear all tasks from the to-do list
 def clear_tasks():
     todo_list.clear()
     return "All tasks have been cleared."
 
+# Function to handle all commands
 def run_assistant(command):
     if "search" in command:
         query = command.replace("search", "").strip()
