@@ -1,0 +1,7 @@
+gTTS
+speechRecognition
+wikipedia
+psutil
+streamlit
+pyjokes
+youtubesearchpython
