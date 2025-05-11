@@ -1,4 +1,5 @@
-import pyttsx3
+from gtts import gTTS
+import os
 import speech_recognition as sr
 import wikipedia
 import datetime
@@ -16,9 +17,9 @@ todo_list = []  # Global to-do list
 
 
 def speak(text):
-    print("Assistant:", text)
-    engine.say(text)
-    engine.runAndWait()
+    tts = gTTS(text=text, lang='en')
+    tts.save("temp.mp3")
+    os.system("mpg321 temp.mp3")
 
 
 def listen():
