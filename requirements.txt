@@ -4,6 +4,4 @@ wikipedia
 pyjokes
 psutil
 pywhatkit
-youtubesearchpython
-smtplib
-email
+git+https://github.com/alexmercerind/youtube-search-python.git
