@@ -3,5 +3,4 @@ SpeechRecognition
 wikipedia
 pyjokes
 psutil
-pywhatkit
-git+https://github.com/alexmercerind/youtube-search-python.git
+webbrowser   # optional comment; it's built-in, so not needed in the list
