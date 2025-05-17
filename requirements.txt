@@ -1,9 +1,9 @@
-gTTS
-PyAudio
+streamlit
 SpeechRecognition
 wikipedia
 pyjokes
 psutil
 pywhatkit
-youtube-search-python
-streamlit
+youtubesearchpython
+smtplib
+email
