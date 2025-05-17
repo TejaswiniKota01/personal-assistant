@@ -1,5 +1,3 @@
-from gtts import gTTS
-import os
 import speech_recognition as sr
 import wikipedia
 import datetime
@@ -19,13 +17,6 @@ if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
 if 'todo_list' not in st.session_state:
     st.session_state.todo_list = []
-
-# Speak (Optional, for local use)
-def speak(text):
-    tts = gTTS(text=text, lang='en')
-    tts.save("temp.mp3")
-    os.system("start temp.mp3")  # Use 'start' for Windows
-
 
 def search_wikipedia(query):
     query = " ".join(query.split())  # Normalize spaces in the query
@@ -47,17 +38,13 @@ def search_wikipedia(query):
     except Exception as e:
         return f"An error occurred: {str(e)}"
 
-
-
 def tell_time():
     now = datetime.datetime.now()
     return "The current time is " + now.strftime("%I:%M %p")
 
-
 def tell_date():
     today = datetime.date.today()
     return "Today's date is " + today.strftime("%B %d, %Y")
-
 
 def open_website(website):
     if not website.startswith('http://') and not website.startswith('https://'):
@@ -65,12 +52,10 @@ def open_website(website):
     webbrowser.open(website)
     return f"Opening {website}"
 
-
 def google_search(query):
     url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
     webbrowser.open(url)
     return f"Searching Google for: {query}"
-
 
 def play_youtube(query):
     try:
@@ -78,7 +63,6 @@ def play_youtube(query):
         return f"Playing {query} on YouTube."
     except Exception as e:
         return f"Could not play the video: {str(e)}"
-
 
 def basic_calculator(command):
     try:
@@ -88,27 +72,22 @@ def basic_calculator(command):
     except Exception:
         return "Sorry, I couldn't calculate that."
 
-
 def tell_joke():
     return pyjokes.get_joke()
-
 
 def check_battery():
     battery = psutil.sensors_battery()
     return f"Battery is at {battery.percent}%."
-
 
 def add_to_notes(note):
     with open("notes.txt", "a") as file:
         file.write(note + "\n")
     return "Note saved."
 
-
 def set_reminder(reminder_text):
     with open("reminders.txt", "a") as f:
         f.write(reminder_text + "\n")
     return f"Reminder saved: {reminder_text}"
-
 
 def start_timer(seconds):
     try:
@@ -126,18 +105,15 @@ def start_timer(seconds):
     except ValueError:
         return "Please provide time in seconds."
 
-
 def add_task(task):
     st.session_state.todo_list.append(task)
     return f"Task added: {task}"
-
 
 def show_tasks():
     if not st.session_state.todo_list:
         return "You have no tasks."
     else:
         return "\n".join([f"{i + 1}. {task}" for i, task in enumerate(st.session_state.todo_list)])
-
 
 def remove_task(task_number):
     try:
@@ -150,11 +126,9 @@ def remove_task(task_number):
     except ValueError:
         return "Provide a valid task number."
 
-
 def clear_tasks():
     st.session_state.todo_list.clear()
     return "All tasks cleared."
-
 
 def send_email(receiver_email, subject, message):
     from_email = "kotatejaswini0106@gmail.com"
@@ -172,7 +146,6 @@ def send_email(receiver_email, subject, message):
         return f"Email sent to {receiver_email}."
     except Exception as e:
         return f"Failed to send email: {str(e)}"
-
 
 def run_assistant(command):
     command = command.lower()
@@ -217,7 +190,6 @@ def run_assistant(command):
     else:
         return "Sorry, I didn't understand that."
 
-
 # Streamlit app UI
 def chat():
     st.title("Personal Assistant")
@@ -250,7 +222,6 @@ def chat():
         if send_btn:
             result = send_email(receiver, subject, body)
             st.sidebar.success(result)
-
 
 if __name__ == "__main__":
     chat()
