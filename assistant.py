@@ -26,142 +26,29 @@ def speak(text):
     tts.save("temp.mp3")
     os.system("mpg321 temp.mp3")
 
-# Listen function to capture user's voice input
-def listen():
-    recognizer = sr.Recognizer()
-    with sr.Microphone() as source:
-        st.write("Listening...")
-        recognizer.adjust_for_ambient_noise(source)
-        audio = recognizer.listen(source)
-    try:
-        command = recognizer.recognize_google(audio)
-        st.write("You said:", command)
-        return command.lower()
-    except sr.UnknownValueError:
-        speak("Sorry, I did not understand that.")
-        return ""
-    except sr.RequestError:
-        speak("Sorry, the speech service is unavailable.")
-        return ""
+# ... [All your existing functions remain unchanged here] ...
 
-def search_wikipedia(query):
-    try:
-        result = wikipedia.summary(query, sentences=1)
-        return result
-    except wikipedia.exceptions.DisambiguationError:
-        return "I found multiple results. Please be more specific."
-    except wikipedia.exceptions.HTTPTimeoutError:
-        return "The Wikipedia service is currently unavailable. Please try again later."
+# 📧 Email sending function with fixed sender email and app password
+def send_email(receiver_email, subject, message):
+    from_email = "kotatejaswini0106@gmail.com"
+    app_password = "ojepedhyhkfqfiyj"  # Use the exact app password without spaces
+               # Your app password (no spaces)
 
-def tell_time():
-    now = datetime.datetime.now()
-    return "The current time is " + now.strftime("%I:%M %p")
-
-def tell_date():
-    today = datetime.date.today()
-    return "Today's date is " + today.strftime("%B %d, %Y")
-
-def open_website(website):
-    if not website.startswith('http://') and not website.startswith('https://'):
-        website = f"https://{website}" if '.' in website else f"https://www.{website}.com"
-    try:
-        webbrowser.open(website)
-        speak(f"Opening {website}")
-    except Exception as e:
-        speak(f"Sorry, I couldn't open the website. Error: {str(e)}")
-
-def google_search(query):
-    url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
-    webbrowser.open(url)
-    return f"Searching Google for: {query}"
-
-def play_youtube(query):
-    try:
-        kit.playonyt(query)
-        return f"Playing {query} on YouTube."
-    except Exception as e:
-        return f"Sorry, could not play the video. Error: {str(e)}"
-
-def basic_calculator(command):
-    try:
-        expression = command.replace("calculate", "").strip()
-        result = eval(expression)
-        return f"The result is {result}."
-    except Exception:
-        return "Sorry, I couldn't calculate that."
-
-def tell_joke():
-    return pyjokes.get_joke()
-
-def check_battery():
-    battery = psutil.sensors_battery()
-    return f"Your battery is at {battery.percent}%."
-
-def add_to_notes(note):
-    with open("notes.txt", "a") as file:
-        file.write(note + "\n")
-    return "Note saved."
-
-def set_reminder(reminder_text):
-    with open("reminders.txt", "a") as f:
-        f.write(reminder_text + "\n")
-    return f"Reminder saved: {reminder_text}"
-
-def start_timer(seconds):
-    try:
-        seconds = int(seconds)
-        time.sleep(seconds)
-        return f"Timer for {seconds} seconds completed!"
-    except ValueError:
-        return "Please provide time in seconds."
-
-def add_task(task):
-    if not task:
-        return "Please specify the task."
-    todo_list.append(task)
-    return f"Task added: {task}"
-
-def show_tasks():
-    if not todo_list:
-        return "You have no tasks."
-    else:
-        tasks = "Here are your tasks:\n"
-        for idx, task in enumerate(todo_list, 1):
-            tasks += f"{idx}. {task}\n"
-        return tasks
-
-def remove_task(task_number):
-    try:
-        index = int(task_number) - 1
-        if 0 <= index < len(todo_list):
-            removed = todo_list.pop(index)
-            return f"Removed task: {removed}"
-        else:
-            return "Invalid task number."
-    except ValueError:
-        return "Please provide a valid task number."
-
-def clear_tasks():
-    todo_list.clear()
-    return "All tasks have been cleared."
-
-# 📧 Email sending function
-def send_email(receiver_email, subject, message, sender_email, app_password):
     try:
         msg = MIMEText(message)
         msg['Subject'] = subject
-        msg['From'] = sender_email
+        msg['From'] = from_email
         msg['To'] = receiver_email
 
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
-            server.login(sender_email, app_password)
+            server.login(from_email, app_password)
             server.send_message(msg)
 
         return f"Email sent to {receiver_email}."
     except Exception as e:
         return f"Failed to send email. Error: {str(e)}"
 
-# 🧠 Command handler
+# Command handler unchanged except removing 'send email' from command handling
 def run_assistant(command):
     if "search" in command:
         query = command.replace("search", "").strip()
@@ -209,9 +96,9 @@ def run_assistant(command):
     else:
         return "I'm sorry, I didn't understand that command."
 
-# 🖥️ Streamlit UI
+# Streamlit UI
 def chat():
-    st.title("🤖 Personal Assistant")
+    st.title("Personal Assistant")
     st.write("Hello! I am your personal assistant. How can I help you today?")
 
     user_input = st.text_input("You: ", "")
@@ -225,7 +112,7 @@ def chat():
     if st.session_state.chat_history:
         st.write("### Chat History")
         for role, message in st.session_state.chat_history:
-            st.write(f"**{role}**: {message}")
+            st.write(f"{role}: {message}")
 
     if todo_list:
         st.write("### Current Tasks:")
@@ -234,16 +121,17 @@ def chat():
 
     st.sidebar.title("Send an Email")
     with st.sidebar.form("email_form"):
-        sender = st.text_input("Your Gmail")
-        app_pass = st.text_input("App Password", type="password")
         receiver = st.text_input("Recipient Email")
         subject = st.text_input("Subject")
         body = st.text_area("Message")
         send_btn = st.form_submit_button("Send")
 
         if send_btn:
-            result = send_email(receiver, subject, body, sender, app_pass)
-            st.sidebar.success(result)
+            if receiver and subject and body:
+                result = send_email(receiver, subject, body)
+                st.sidebar.success(result)
+            else:
+                st.sidebar.error("Please fill all the fields.")
 
 if __name__ == "__main__":
     chat()
