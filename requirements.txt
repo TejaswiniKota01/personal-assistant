@@ -1,9 +1,9 @@
-gtts
-speechrecognition
+gTTS
+PyAudio
+SpeechRecognition
 wikipedia
 pyjokes
 psutil
 pywhatkit
-youtubesearchpython
+youtube-search-python
 streamlit
-pyaudio

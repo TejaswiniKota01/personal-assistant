@@ -10,9 +10,15 @@ import streamlit as st
 import time
 import pywhatkit as kit
 from youtubesearchpython import VideosSearch
+import smtplib
+from email.mime.text import MIMEText
 
 # Global to-do list
 todo_list = []
+
+# Initialize chat history in Streamlit session state
+if 'chat_history' not in st.session_state:
+    st.session_state.chat_history = []
 
 # Speak function to output audio responses
 def speak(text):
@@ -38,7 +44,6 @@ def listen():
         speak("Sorry, the speech service is unavailable.")
         return ""
 
-# Wikipedia search function
 def search_wikipedia(query):
     try:
         result = wikipedia.summary(query, sentences=1)
@@ -48,17 +53,14 @@ def search_wikipedia(query):
     except wikipedia.exceptions.HTTPTimeoutError:
         return "The Wikipedia service is currently unavailable. Please try again later."
 
-# Function to tell the current time
 def tell_time():
     now = datetime.datetime.now()
     return "The current time is " + now.strftime("%I:%M %p")
 
-# Function to tell the current date
 def tell_date():
     today = datetime.date.today()
     return "Today's date is " + today.strftime("%B %d, %Y")
 
-# Open website function
 def open_website(website):
     if not website.startswith('http://') and not website.startswith('https://'):
         website = f"https://{website}" if '.' in website else f"https://www.{website}.com"
@@ -68,13 +70,11 @@ def open_website(website):
     except Exception as e:
         speak(f"Sorry, I couldn't open the website. Error: {str(e)}")
 
-# Google search function
 def google_search(query):
     url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
     webbrowser.open(url)
     return f"Searching Google for: {query}"
 
-# Play YouTube video function
 def play_youtube(query):
     try:
         kit.playonyt(query)
@@ -82,7 +82,6 @@ def play_youtube(query):
     except Exception as e:
         return f"Sorry, could not play the video. Error: {str(e)}"
 
-# Basic calculator function
 def basic_calculator(command):
     try:
         expression = command.replace("calculate", "").strip()
@@ -91,28 +90,23 @@ def basic_calculator(command):
     except Exception:
         return "Sorry, I couldn't calculate that."
 
-# Tell a joke function
 def tell_joke():
     return pyjokes.get_joke()
 
-# Check battery status
 def check_battery():
     battery = psutil.sensors_battery()
     return f"Your battery is at {battery.percent}%."
 
-# Add a note
 def add_to_notes(note):
     with open("notes.txt", "a") as file:
         file.write(note + "\n")
     return "Note saved."
 
-# Set a reminder
 def set_reminder(reminder_text):
     with open("reminders.txt", "a") as f:
         f.write(reminder_text + "\n")
     return f"Reminder saved: {reminder_text}"
 
-# Start a timer function
 def start_timer(seconds):
     try:
         seconds = int(seconds)
@@ -121,14 +115,12 @@ def start_timer(seconds):
     except ValueError:
         return "Please provide time in seconds."
 
-# Add task to the to-do list
 def add_task(task):
     if not task:
         return "Please specify the task."
     todo_list.append(task)
     return f"Task added: {task}"
 
-# Show all tasks in the to-do list
 def show_tasks():
     if not todo_list:
         return "You have no tasks."
@@ -138,7 +130,6 @@ def show_tasks():
             tasks += f"{idx}. {task}\n"
         return tasks
 
-# Remove a task from the to-do list
 def remove_task(task_number):
     try:
         index = int(task_number) - 1
@@ -150,12 +141,27 @@ def remove_task(task_number):
     except ValueError:
         return "Please provide a valid task number."
 
-# Clear all tasks from the to-do list
 def clear_tasks():
     todo_list.clear()
     return "All tasks have been cleared."
 
-# Function to handle all commands
+# 📧 Email sending function
+def send_email(receiver_email, subject, message, sender_email, app_password):
+    try:
+        msg = MIMEText(message)
+        msg['Subject'] = subject
+        msg['From'] = sender_email
+        msg['To'] = receiver_email
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender_email, app_password)
+            server.send_message(msg)
+
+        return f"Email sent to {receiver_email}."
+    except Exception as e:
+        return f"Failed to send email. Error: {str(e)}"
+
+# 🧠 Command handler
 def run_assistant(command):
     if "search" in command:
         query = command.replace("search", "").strip()
@@ -198,24 +204,46 @@ def run_assistant(command):
         return remove_task(number)
     elif "clear tasks" in command:
         return clear_tasks()
+    elif "send email" in command:
+        return "To send an email, please use the Streamlit sidebar form."
     else:
         return "I'm sorry, I didn't understand that command."
 
-# Streamlit Interface
+# 🖥️ Streamlit UI
 def chat():
-    st.title("Personal Assistant")
+    st.title("🤖 Personal Assistant")
     st.write("Hello! I am your personal assistant. How can I help you today?")
 
     user_input = st.text_input("You: ", "")
 
     if user_input:
         response = run_assistant(user_input.lower())
+        st.session_state.chat_history.append(("You", user_input))
+        st.session_state.chat_history.append(("Assistant", response))
         st.write(f"Assistant: {response}")
+
+    if st.session_state.chat_history:
+        st.write("### Chat History")
+        for role, message in st.session_state.chat_history:
+            st.write(f"**{role}**: {message}")
 
     if todo_list:
         st.write("### Current Tasks:")
         for idx, task in enumerate(todo_list, 1):
             st.write(f"{idx}. {task}")
+
+    st.sidebar.title("Send an Email")
+    with st.sidebar.form("email_form"):
+        sender = st.text_input("Your Gmail")
+        app_pass = st.text_input("App Password", type="password")
+        receiver = st.text_input("Recipient Email")
+        subject = st.text_input("Subject")
+        body = st.text_area("Message")
+        send_btn = st.form_submit_button("Send")
+
+        if send_btn:
+            result = send_email(receiver, subject, body, sender, app_pass)
+            st.sidebar.success(result)
 
 if __name__ == "__main__":
     chat()
