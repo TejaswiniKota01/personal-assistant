@@ -12,28 +12,153 @@ import pywhatkit as kit
 from youtubesearchpython import VideosSearch
 import smtplib
 from email.mime.text import MIMEText
+import re
 
-# Global to-do list
-todo_list = []
-
-# Initialize chat history in Streamlit session state
+# Initialize session states
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
+if 'todo_list' not in st.session_state:
+    st.session_state.todo_list = []
 
-# Speak function to output audio responses
+# Speak (Optional, for local use)
 def speak(text):
     tts = gTTS(text=text, lang='en')
     tts.save("temp.mp3")
-    os.system("mpg321 temp.mp3")
+    os.system("start temp.mp3")  # Use 'start' for Windows
 
-# ... [All your existing functions remain unchanged here] ...
 
-# 📧 Email sending function with fixed sender email and app password
+def search_wikipedia(query):
+    query = " ".join(query.split())  # Normalize spaces in the query
+    try:
+        search_results = wikipedia.search(query)
+        if not search_results:
+            return "Sorry, no Wikipedia page matches your query."
+        # Try first result title
+        for title in search_results:
+            try:
+                summary = wikipedia.summary(title, sentences=2)
+                return summary
+            except wikipedia.exceptions.DisambiguationError as e:
+                # If disambiguation page, try next option
+                continue
+            except wikipedia.exceptions.PageError:
+                continue
+        return "Sorry, no Wikipedia page matches your query."
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
+
+
+
+def tell_time():
+    now = datetime.datetime.now()
+    return "The current time is " + now.strftime("%I:%M %p")
+
+
+def tell_date():
+    today = datetime.date.today()
+    return "Today's date is " + today.strftime("%B %d, %Y")
+
+
+def open_website(website):
+    if not website.startswith('http://') and not website.startswith('https://'):
+        website = f"https://{website}" if '.' in website else f"https://www.{website}.com"
+    webbrowser.open(website)
+    return f"Opening {website}"
+
+
+def google_search(query):
+    url = f"https://www.google.com/search?q={query.replace(' ', '+')}"
+    webbrowser.open(url)
+    return f"Searching Google for: {query}"
+
+
+def play_youtube(query):
+    try:
+        kit.playonyt(query)
+        return f"Playing {query} on YouTube."
+    except Exception as e:
+        return f"Could not play the video: {str(e)}"
+
+
+def basic_calculator(command):
+    try:
+        expression = command.replace("calculate", "").strip()
+        result = eval(expression)
+        return f"The result is {result}."
+    except Exception:
+        return "Sorry, I couldn't calculate that."
+
+
+def tell_joke():
+    return pyjokes.get_joke()
+
+
+def check_battery():
+    battery = psutil.sensors_battery()
+    return f"Battery is at {battery.percent}%."
+
+
+def add_to_notes(note):
+    with open("notes.txt", "a") as file:
+        file.write(note + "\n")
+    return "Note saved."
+
+
+def set_reminder(reminder_text):
+    with open("reminders.txt", "a") as f:
+        f.write(reminder_text + "\n")
+    return f"Reminder saved: {reminder_text}"
+
+
+def start_timer(seconds):
+    try:
+        seconds = int(seconds)
+        progress_bar = st.progress(0)
+        timer_text = st.empty()
+
+        for i in range(seconds):
+            timer_text.text(f"Timer: {seconds - i} seconds remaining...")
+            progress_bar.progress((i + 1) / seconds)
+            time.sleep(1)
+
+        timer_text.text("Timer completed!")
+        return f"Timer for {seconds} seconds completed!"
+    except ValueError:
+        return "Please provide time in seconds."
+
+
+def add_task(task):
+    st.session_state.todo_list.append(task)
+    return f"Task added: {task}"
+
+
+def show_tasks():
+    if not st.session_state.todo_list:
+        return "You have no tasks."
+    else:
+        return "\n".join([f"{i + 1}. {task}" for i, task in enumerate(st.session_state.todo_list)])
+
+
+def remove_task(task_number):
+    try:
+        index = int(task_number) - 1
+        if 0 <= index < len(st.session_state.todo_list):
+            removed = st.session_state.todo_list.pop(index)
+            return f"Removed task: {removed}"
+        else:
+            return "Invalid task number."
+    except ValueError:
+        return "Provide a valid task number."
+
+
+def clear_tasks():
+    st.session_state.todo_list.clear()
+    return "All tasks cleared."
+
+
 def send_email(receiver_email, subject, message):
     from_email = "kotatejaswini0106@gmail.com"
-    app_password = "ojepedhyhkfqfiyj"  # Use the exact app password without spaces
-               # Your app password (no spaces)
-
+    app_password = "ojepedhyhkfqfiyj"
     try:
         msg = MIMEText(message)
         msg['Subject'] = subject
@@ -46,26 +171,27 @@ def send_email(receiver_email, subject, message):
 
         return f"Email sent to {receiver_email}."
     except Exception as e:
-        return f"Failed to send email. Error: {str(e)}"
+        return f"Failed to send email: {str(e)}"
 
-# Command handler unchanged except removing 'send email' from command handling
+
 def run_assistant(command):
+    command = command.lower()
     if "search" in command:
-        query = command.replace("search", "").strip()
+        # Clean the query properly by removing the word 'search' and extra spaces
+        query = re.sub(r'\bsearch\b', '', command).strip()
         return search_wikipedia(query)
+    elif "timer" in command:
+        return start_timer(re.sub(r'\btimer\b', '', command).strip())
     elif "time" in command:
         return tell_time()
     elif "date" in command:
         return tell_date()
     elif "open" in command:
-        website = command.replace("open", "").strip()
-        return open_website(website)
+        return open_website(re.sub(r'\bopen\b', '', command).strip())
     elif "google" in command:
-        query = command.replace("google", "").strip()
-        return google_search(query)
+        return google_search(re.sub(r'\bgoogle\b', '', command).strip())
     elif "play" in command:
-        query = command.replace("play", "").strip()
-        return play_youtube(query)
+        return play_youtube(re.sub(r'\bplay\b', '', command).strip())
     elif "calculate" in command or any(op in command for op in ['+', '-', '*', '/']):
         return basic_calculator(command)
     elif "joke" in command:
@@ -73,38 +199,33 @@ def run_assistant(command):
     elif "battery" in command:
         return check_battery()
     elif "note" in command:
-        note = command.replace("note", "").strip()
-        return add_to_notes(note)
+        return add_to_notes(re.sub(r'\bnote\b', '', command).strip())
     elif "remind me" in command:
-        reminder = command.replace("remind me", "").strip()
-        return set_reminder(reminder)
+        return set_reminder(re.sub(r'remind me', '', command).strip())
     elif "timer" in command:
-        seconds = command.replace("timer", "").strip()
-        return start_timer(seconds)
+        return start_timer(re.sub(r'\btimer\b', '', command).strip())
     elif "add task" in command:
-        task = command.replace("add task", "").strip()
-        return add_task(task)
+        return add_task(re.sub(r'add task', '', command).strip())
     elif "show task" in command:
         return show_tasks()
     elif "remove task" in command:
-        number = command.replace("remove task", "").strip()
-        return remove_task(number)
+        return remove_task(re.sub(r'remove task', '', command).strip())
     elif "clear tasks" in command:
         return clear_tasks()
     elif "send email" in command:
-        return "To send an email, please use the Streamlit sidebar form."
+        return "Use the sidebar to send an email."
     else:
-        return "I'm sorry, I didn't understand that command."
+        return "Sorry, I didn't understand that."
 
-# Streamlit UI
+
+# Streamlit app UI
 def chat():
     st.title("Personal Assistant")
-    st.write("Hello! I am your personal assistant. How can I help you today?")
 
-    user_input = st.text_input("You: ", "")
+    user_input = st.text_input("You:", "")
 
     if user_input:
-        response = run_assistant(user_input.lower())
+        response = run_assistant(user_input)
         st.session_state.chat_history.append(("You", user_input))
         st.session_state.chat_history.append(("Assistant", response))
         st.write(f"Assistant: {response}")
@@ -114,10 +235,10 @@ def chat():
         for role, message in st.session_state.chat_history:
             st.write(f"{role}: {message}")
 
-    if todo_list:
-        st.write("### Current Tasks:")
-        for idx, task in enumerate(todo_list, 1):
-            st.write(f"{idx}. {task}")
+    if st.session_state.todo_list:
+        st.write("### Your Tasks:")
+        for i, task in enumerate(st.session_state.todo_list, 1):
+            st.write(f"{i}. {task}")
 
     st.sidebar.title("Send an Email")
     with st.sidebar.form("email_form"):
@@ -127,11 +248,9 @@ def chat():
         send_btn = st.form_submit_button("Send")
 
         if send_btn:
-            if receiver and subject and body:
-                result = send_email(receiver, subject, body)
-                st.sidebar.success(result)
-            else:
-                st.sidebar.error("Please fill all the fields.")
+            result = send_email(receiver, subject, body)
+            st.sidebar.success(result)
+
 
 if __name__ == "__main__":
     chat()
