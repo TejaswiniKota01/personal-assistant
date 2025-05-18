@@ -1,6 +1,12 @@
-streamlit
-SpeechRecognition
+gtts
+speechrecognition
 wikipedia
 pyjokes
 psutil
-webbrowser   # optional comment; it's built-in, so not needed in the list
+pywhatkit
+youtubesearchpython
+streamlit
+pyaudio
+nltk
+PyDictionary
+requests
