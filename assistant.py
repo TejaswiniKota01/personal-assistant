@@ -82,6 +82,12 @@ Small Talk & Greetings:
 - roll a dice             : Simulate rolling a six-sided dice
 - flip a coin             : Simulate flipping a coin
 
+-Dictionary & Language:
+- meaning of <word>       : Get meaning/definitions of a word
+- synonym of <word>       : Get synonyms of a word
+- antonym of <word>       : Get antonyms of a word
+
+
 Help:
 - help / commands / what can you do  : Show this help message
 """
