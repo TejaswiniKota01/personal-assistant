@@ -333,8 +333,8 @@ def clear_tasks():
     return "All tasks cleared."
 
 def send_email(receiver_email, subject, message):
-    from_email = "kotatejaswini0106@gmail.com"
-    app_password = "ojepedhyhkfqfiyj"
+    from_email = "kotatejaswini0106@gmail.com"# repalce with your email
+    app_password = "xxxxxxxxxxxxx"#replace with your app key 
     try:
         msg = MIMEText(message)
         msg['Subject'] = subject
